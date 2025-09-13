@@ -15,7 +15,7 @@ ansible-galaxy install -r requirements.yml
 
 Run the main provisioning playbook:
 ```bash
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini playbook.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini --ask-pass playbook.yml
 ```
 
 Run Scaleway provisioning (creates instances then provisions them):
