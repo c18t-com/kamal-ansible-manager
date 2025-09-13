@@ -1,0 +1,53 @@
+---
+- name: Check if deployer user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: deployer
+  register: deployer_user_check
+  failed_when: false
+
+- name: Create deployer user
+  ansible.builtin.user:
+    name: deployer
+    shell: /bin/bash
+    create_home: true
+    groups: docker
+    append: true
+    password_lock: true
+  when: deployer_user_check.msg is defined and 'One or more supplied keys could not be found' in deployer_user_check.msg
+
+- name: Check if SSH key already exists
+  ansible.builtin.stat:
+    path: /home/deployer/.ssh/id_ed25519
+  register: ssh_key_check
+
+- name: Generate SSH key pair for deployer
+  ansible.builtin.user:
+    name: deployer
+    generate_ssh_key: true
+    ssh_key_type: ed25519
+    ssh_key_file: /home/deployer/.ssh/id_ed25519
+  when: not ssh_key_check.stat.exists
+
+- name: Set proper permissions on SSH directory
+  ansible.builtin.file:
+    path: /home/deployer/.ssh
+    owner: deployer
+    group: deployer
+    mode: '0700'
+    state: directory
+
+- name: Copy public key to authorized_keys
+  ansible.builtin.copy:
+    src: /home/deployer/.ssh/id_ed25519.pub
+    dest: /home/deployer/.ssh/authorized_keys
+    owner: deployer
+    group: deployer
+    mode: '0600'
+    remote_src: true
+
+- name: Fetch private key to local machine
+  ansible.builtin.fetch:
+    src: /home/deployer/.ssh/id_ed25519
+    dest: ./keys/{{ inventory_hostname }}/deployer_id_ed25519
+    flat: true
