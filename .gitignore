@@ -1,4 +1,4 @@
 hosts.ini
 roles/scaleway/vars/main.yml
 keys/
-idea/
+.idea/
