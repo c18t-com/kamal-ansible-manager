@@ -16,6 +16,13 @@
     password_lock: true
   when: deployer_user_check.msg is defined and 'One or more supplied keys could not be found' in deployer_user_check.msg
 
+- name: Ensure deployer user is in docker group
+  ansible.builtin.user:
+    name: deployer
+    groups: docker
+    append: true
+  when: deployer_user_check.msg is not defined or 'One or more supplied keys could not be found' not in deployer_user_check.msg
+
 - name: Check if SSH key already exists
   ansible.builtin.stat:
     path: /home/deployer/.ssh/id_ed25519
