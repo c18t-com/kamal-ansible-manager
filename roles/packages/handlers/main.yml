@@ -10,3 +10,9 @@
     name: fail2ban
     state: started
     enabled: true
+
+- name: Start auditd
+  ansible.builtin.service:
+    name: auditd
+    state: started
+    enabled: true

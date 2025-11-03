@@ -10,9 +10,11 @@
   roles:
     - wait_for_connection
     - packages
+    - sysctl
     - docker
     - deployer
     - firewall
     - security
+    - auditd
     - geerlingguy.swap
     - reboot_if_needed

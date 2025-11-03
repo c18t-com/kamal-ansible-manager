@@ -20,6 +20,8 @@
   ansible.builtin.apt:
     name:
       - apt-transport-https
+      - auditd
+      - audispd-plugins
       - build-essential
       - ca-certificates
       - curl
@@ -39,6 +41,7 @@
   notify:
     - Start ntp
     - Start fail2ban
+    - Start auditd
 
 - name: Remove snap
   ansible.builtin.apt:

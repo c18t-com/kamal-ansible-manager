@@ -1,0 +1,40 @@
+# Fail2Ban custom configuration
+# This file overrides the default fail2ban settings
+
+[DEFAULT]
+# Ban duration in seconds (10 minutes)
+bantime = 600
+
+# Time window for counting failures (10 minutes)
+findtime = 600
+
+# Number of failures before ban
+maxretry = 5
+
+# Destination email for ban notifications (optional)
+# destemail = root@localhost
+
+# Action to take when ban occurs
+# action = %(action_)s
+# action_ = ban only
+# action_mw = ban and send email with whois
+# action_mwl = ban and send email with whois and logs
+action = %(action_)s
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+bantime = 3600
+findtime = 600
+
+[sshd-ddos]
+enabled = true
+port = ssh
+filter = sshd-ddos
+logpath = /var/log/auth.log
+maxretry = 10
+bantime = 600
+findtime = 60

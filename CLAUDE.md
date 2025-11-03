@@ -34,13 +34,15 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook scaleway.yml
 ### Role Execution Order
 The main playbook executes roles in this specific order:
 1. `wait_for_connection` - Ensures SSH connectivity before proceeding
-2. `packages` - Updates system packages and installs essential tools
-3. `docker` - Installs and configures Docker
-4. `deployer` - Creates deployer user with SSH keys for Kamal deployments
-5. `firewall` - Configures UFW firewall rules
-6. `security` - Sets up fail2ban, disables SSH password auth, configures unattended upgrades
-7. `geerlingguy.swap` - External role for swap file configuration
-8. `reboot_if_needed` - Reboots server if kernel updates require it
+2. `packages` - Updates system packages and installs essential tools (including auditd)
+3. `sysctl` - Applies kernel hardening parameters for network and system security
+4. `docker` - Installs and configures Docker with security daemon settings
+5. `deployer` - Creates deployer user with SSH keys for Kamal deployments
+6. `firewall` - Configures UFW firewall rules
+7. `security` - Configures SSH hardening, fail2ban jails, and unattended upgrades
+8. `auditd` - Sets up comprehensive system auditing for security monitoring
+9. `geerlingguy.swap` - External role for swap file configuration
+10. `reboot_if_needed` - Reboots server if kernel updates require it
 
 ### Configuration Files
 - `hosts.ini` - Ansible inventory defining target servers in `webservers` group (copy from `hosts.ini.example` to get started)
@@ -50,7 +52,14 @@ The main playbook executes roles in this specific order:
 
 ### Key Features
 - **Idempotent operations**: Roles check for existing configurations before making changes
-- **Security hardening**: Removes snap, configures fail2ban, UFW, and disables SSH password login
+- **Security hardening**:
+  - Removes snap packages
+  - Configures fail2ban with SSH protection (3600s ban after 5 failed attempts)
+  - UFW firewall with rate limiting on SSH
+  - Disables SSH password login, adds MaxAuthTries limit
+  - Kernel hardening via sysctl (protection against SYN floods, IP spoofing, etc.)
+  - Docker daemon security configuration (log rotation, disabled ICC, no-new-privileges)
+  - Comprehensive auditd rules monitoring sudo, SSH, Docker, user changes, and system calls
 - **Kamal preparation**: Creates dedicated deployer user with SSH key management
 - **Optional cloud provisioning**: Scaleway integration for automated server creation
 
@@ -62,3 +71,23 @@ Override default settings in `playbook.yml` vars section. Common overrides inclu
 - `security_autoupdate_reboot`: Enable/disable automatic reboots for security updates
 - `security_autoupdate_reboot_time`: Schedule reboot time (24h format)
 - `swap_file_size_mb`: Configure swap file size (from geerlingguy.swap role)
+
+### Security Features Details
+
+**Fail2ban Configuration** (roles/security/templates/jail.local.j2):
+- SSH jail: 5 failed attempts = 3600s ban
+- SSH DDoS protection: 10 attempts in 60s = 600s ban
+
+**Kernel Hardening** (roles/sysctl/tasks/main.yml):
+- SYN flood protection, IP spoofing prevention
+- ICMP redirect blocking, martian packet logging
+- Kernel pointer and dmesg access restrictions
+
+**Docker Security** (roles/docker/templates/daemon.json.j2):
+- Log rotation (10MB max, 3 files)
+- Inter-container communication disabled by default
+- No new privileges flag enabled
+- Userland proxy disabled for performance
+
+**Audit Monitoring** (roles/auditd/tasks/main.yml):
+Tracks: sudo usage, SSH config changes, user/group modifications, Docker operations, kernel module loading, time changes

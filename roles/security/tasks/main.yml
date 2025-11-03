@@ -16,8 +16,27 @@
     - { key: "ChallengeResponseAuthentication", value: "no" }
     - { key: "GSSAPIAuthentication", value: "no" }
     - { key: "X11Forwarding", value: "no" }
+    - { key: "MaxAuthTries", value: "3" }
+    - { key: "ClientAliveInterval", value: "300" }
+    - { key: "ClientAliveCountMax", value: "2" }
   notify:
     - Restart ssh
+
+- name: Configure Fail2ban jail.local
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart fail2ban
+
+- name: Ensure fail2ban is started and enabled
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
 
 - name: Update unattended-upgrades configuration to be more secure
   ansible.builtin.lineinfile:

@@ -1,0 +1,79 @@
+---
+- name: Configure auditd rules for security monitoring
+  ansible.builtin.blockinfile:
+    path: /etc/audit/rules.d/audit.rules
+    create: true
+    mode: "0640"
+    owner: root
+    group: root
+    block: |
+      # Delete all existing rules
+      -D
+
+      # Buffer Size
+      -b 8192
+
+      # Failure Mode (0=silent 1=printk 2=panic)
+      -f 1
+
+      # Audit system calls
+      -a always,exit -F arch=b64 -S execve -k exec
+      -a always,exit -F arch=b32 -S execve -k exec
+
+      # Monitor sudo usage
+      -w /usr/bin/sudo -p x -k sudo_usage
+      -w /etc/sudoers -p wa -k sudoers_changes
+      -w /etc/sudoers.d/ -p wa -k sudoers_changes
+
+      # Monitor SSH configuration changes
+      -w /etc/ssh/sshd_config -p wa -k sshd_config_changes
+
+      # Monitor user and group changes
+      -w /etc/passwd -p wa -k passwd_changes
+      -w /etc/group -p wa -k group_changes
+      -w /etc/shadow -p wa -k shadow_changes
+      -w /etc/gshadow -p wa -k gshadow_changes
+
+      # Monitor login/logout events
+      -w /var/log/faillog -p wa -k login
+      -w /var/log/lastlog -p wa -k login
+      -w /var/run/utmp -p wa -k session
+      -w /var/log/wtmp -p wa -k session
+      -w /var/log/btmp -p wa -k session
+
+      # Monitor changes to system time
+      -a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time_change
+      -a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time_change
+      -a always,exit -F arch=b64 -S clock_settime -k time_change
+      -a always,exit -F arch=b32 -S clock_settime -k time_change
+      -w /etc/localtime -p wa -k time_change
+
+      # Monitor network environment changes
+      -a always,exit -F arch=b64 -S sethostname -S setdomainname -k network_modifications
+      -a always,exit -F arch=b32 -S sethostname -S setdomainname -k network_modifications
+      -w /etc/hosts -p wa -k network_modifications
+      -w /etc/network/ -p wa -k network_modifications
+
+      # Monitor Docker daemon
+      -w /usr/bin/docker -p wa -k docker
+      -w /var/lib/docker -p wa -k docker
+      -w /etc/docker -p wa -k docker
+      -w /usr/lib/systemd/system/docker.service -p wa -k docker
+      -w /usr/lib/systemd/system/docker.socket -p wa -k docker
+
+      # Monitor kernel module loading/unloading
+      -w /sbin/insmod -p x -k modules
+      -w /sbin/rmmod -p x -k modules
+      -w /sbin/modprobe -p x -k modules
+      -a always,exit -F arch=b64 -S init_module -S delete_module -k modules
+
+      # Make configuration immutable (reboot required to change)
+      -e 2
+  notify:
+    - Restart auditd
+
+- name: Ensure auditd is started and enabled
+  ansible.builtin.service:
+    name: auditd
+    state: started
+    enabled: true
