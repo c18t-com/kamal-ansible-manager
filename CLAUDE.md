@@ -15,8 +15,10 @@ ansible-galaxy install -r requirements.yml
 
 Run the main provisioning playbook:
 ```bash
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini --ask-pass playbook.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini playbook.yml
 ```
+
+Note: Add `--ask-pass` flag if you need to provide the SSH password interactively (when SSH keys aren't set up yet).
 
 Run Scaleway provisioning (creates instances then provisions them):
 ```bash
@@ -41,9 +43,10 @@ The main playbook executes roles in this specific order:
 8. `reboot_if_needed` - Reboots server if kernel updates require it
 
 ### Configuration Files
-- `hosts.ini` - Ansible inventory defining target servers in `webservers` group
+- `hosts.ini` - Ansible inventory defining target servers in `webservers` group (copy from `hosts.ini.example` to get started)
 - `requirements.yml` - External Ansible collections and roles dependencies
 - Variables are configured directly in `playbook.yml` under the `vars` section
+- `roles/scaleway/vars/main.yml` - Scaleway configuration (copy from `main.yml.example` and configure API credentials)
 
 ### Key Features
 - **Idempotent operations**: Roles check for existing configurations before making changes
