@@ -2,6 +2,10 @@
 # This file overrides the default fail2ban settings
 
 [DEFAULT]
+# IPs to ignore (never ban)
+# Includes localhost and GitHub Actions runners
+ignoreip = 127.0.0.1/8 ::1 {{ fail2ban_ignoreip | default('') }}
+
 # Ban duration in seconds (10 minutes)
 bantime = 600
 
@@ -29,6 +33,8 @@ logpath = /var/log/auth.log
 maxretry = 5
 bantime = 3600
 findtime = 600
+ignoreregex = ^.* user=deployer .*$
+              ^.* for deployer .*$
 
 [sshd-ddos]
 enabled = true
