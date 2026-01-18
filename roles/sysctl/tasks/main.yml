@@ -70,10 +70,7 @@
     # Restrict kernel core dumps
     - { name: "kernel.core_uses_pid", value: "1" }
 
-    # Enable ExecShield protection
-    - { name: "kernel.exec-shield", value: "1" }
-
-    # Randomize memory space
+    # Randomize memory space (ASLR - replaces legacy exec-shield)
     - { name: "kernel.randomize_va_space", value: "2" }
 
     # Restrict ptrace scope

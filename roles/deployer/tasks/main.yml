@@ -1,27 +1,40 @@
 ---
-- name: Check if deployer user exists
-  ansible.builtin.getent:
-    database: passwd
-    key: deployer
-  register: deployer_user_check
-  failed_when: false
-
-- name: Create deployer user
+- name: Create or update deployer user
   ansible.builtin.user:
     name: deployer
     shell: /bin/bash
+    home: /home/deployer
     create_home: true
     groups: docker
     append: true
     password_lock: true
-  when: deployer_user_check.msg is defined and 'One or more supplied keys could not be found' in deployer_user_check.msg
 
-- name: Ensure deployer user is in docker group
-  ansible.builtin.user:
-    name: deployer
-    groups: docker
-    append: true
-  when: deployer_user_check.msg is not defined or 'One or more supplied keys could not be found' not in deployer_user_check.msg
+- name: Ensure .bashrc exists
+  ansible.builtin.copy:
+    src: /etc/skel/.bashrc
+    dest: /home/deployer/.bashrc
+    owner: deployer
+    group: deployer
+    mode: '0644'
+    remote_src: true
+    force: false
+
+- name: Ensure .profile exists
+  ansible.builtin.copy:
+    src: /etc/skel/.profile
+    dest: /home/deployer/.profile
+    owner: deployer
+    group: deployer
+    mode: '0644'
+    remote_src: true
+    force: false
+
+- name: Ensure home directory ownership
+  ansible.builtin.file:
+    path: /home/deployer
+    owner: deployer
+    group: deployer
+    state: directory
 
 - name: Check if SSH key already exists
   ansible.builtin.stat:
@@ -56,5 +69,17 @@
 - name: Fetch private key to local machine
   ansible.builtin.fetch:
     src: /home/deployer/.ssh/id_ed25519
-    dest: ./keys/{{ inventory_hostname }}/deployer_id_ed25519
+    dest: ./keys/{{ inventory_hostname }}/id_ed25519
+    flat: true
+
+- name: Set proper permissions on local private key
+  ansible.builtin.file:
+    path: ./keys/{{ inventory_hostname }}/id_ed25519
+    mode: '0600'
+  delegate_to: localhost
+
+- name: Fetch public key to local machine
+  ansible.builtin.fetch:
+    src: /home/deployer/.ssh/id_ed25519.pub
+    dest: ./keys/{{ inventory_hostname }}/id_ed25519.pub
     flat: true

@@ -30,7 +30,6 @@
       - git
       - gnupg
       - htop
-      - ntp
       - ufw
       - unattended-upgrades
       - vim

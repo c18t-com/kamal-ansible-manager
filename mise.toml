@@ -1,7 +1,8 @@
 [tools]
 ansible = '12.1.0'
 pipx = "latest"
+python = "3.14.2"
 
-[tasks.run]
+[tasks.playbook]
 env.ANSIBLE_HOST_KEY_CHECKING = "False"
 run = "ansible-playbook -i hosts.ini playbook.yml"
