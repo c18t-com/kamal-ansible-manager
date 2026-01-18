@@ -32,6 +32,10 @@
     proto: 'tcp'
   when: firewall_postgres_enabled | default(false)
 
+- name: Enable UFW logging
+  community.general.ufw:
+    logging: 'low'
+
 - name: Enable ufw
   community.general.ufw:
     state: enabled
